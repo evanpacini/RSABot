@@ -1,75 +1,90 @@
-int vSpeed = 110;
-int turn_speed = 230;
-int turn_delay = 10;
-
-// L293 Connection
-const int motorA1 = 8;
-const int motorA2 = 10;
-const int motorAspeed = 9;
-const int motorB1 = 12;
-const int motorB2 = 13;
-const int motorBspeed = 11;
+// Motor pins
+#define MOTOR_1REV 7 // left
+#define MOTOR_1EN 24
+#define MOTOR_1FWD 6
+#define MOTOR_2REV 3 // right
+#define MOTOR_2EN 25
+#define MOTOR_2FWD 2
 
 // Sensor Connection
-const int left_sensor_pin = A0;
-const int right_sensor_pin = A1;
+#define TCRT500_LEFT 8
+#define TCRT500_RIGHT 9
 
-int left_sensor_state;
-int right_sensor_state;
+// Speeds
+#define MAX_SPEED 100
+#define TURNING_SPEED 100
+
+// Delays
+#define TURN_DELAY 25
+#define FWD_DELAY 10
+
+uint8_t leftSensorState;
+bool rightSensorState;
 
 void setup()
 {
-    pinMode(motorA1, OUTPUT);
-    pinMode(motorA2, OUTPUT);
-    pinMode(motorB1, OUTPUT);
-    pinMode(motorB2, OUTPUT);
-    delay(3000);
+    // Sensor setup
+    pinMode(TCRT500_LEFT, INPUT);
+    pinMode(TCRT500_RIGHT, INPUT);
+
+    // Motor Setup
+    pinMode(MOTOR_1REV, OUTPUT); // left
+    pinMode(MOTOR_1EN, OUTPUT);
+    pinMode(MOTOR_1FWD, OUTPUT);
+    pinMode(MOTOR_2REV, OUTPUT); // right
+    pinMode(MOTOR_2EN, OUTPUT);
+    pinMode(MOTOR_2FWD, OUTPUT);
+
+    // Start motors
+    digitalWrite(MOTOR_1EN, HIGH);
+    digitalWrite(MOTOR_2EN, HIGH);
+    delay(500);
 }
 
 void loop()
 {
-    left_sensor_state = analogRead(left_sensor_pin);
-    right_sensor_state = analogRead(right_sensor_pin);
+    leftSensorState = digitalRead(TCRT500_LEFT);
+    rightSensorState = digitalRead(TCRT500_RIGHT);
+    Serial.println(leftSensorState);
+    Serial.println(rightSensorState);
 
-    if (right_sensor_state > 500 && left_sensor_state < 500)
+    if (rightSensorState && leftSensorState)
     {
-        digitalWrite(motorA1, LOW);
-        digitalWrite(motorA2, HIGH);
-        digitalWrite(motorB1, LOW);
-        digitalWrite(motorB2, HIGH);
-
-        analogWrite(motorAspeed, vSpeed);
-        analogWrite(motorBspeed, turn_speed);
-    }
-    if (right_sensor_state < 500 && left_sensor_state > 500)
-    {
-        digitalWrite(motorA1, HIGH);
-        digitalWrite(motorA2, LOW);
-        digitalWrite(motorB1, HIGH);
-        digitalWrite(motorB2, LOW);
-
-        analogWrite(motorAspeed, turn_speed);
-        analogWrite(motorBspeed, vSpeed);
-
-        delay(turn_delay);
+        // forward
+        analogWrite(MOTOR_1REV, 0);
+        analogWrite(MOTOR_2REV, 0);
+        analogWrite(MOTOR_1FWD, MAX_SPEED);
+        analogWrite(MOTOR_2FWD, MAX_SPEED);
+        // delay(FWD_DELAY);
     }
 
-    if (right_sensor_state > 500 && left_sensor_state > 500)
+    if (rightSensorState && !leftSensorState)
     {
-        digitalWrite(motorA2, LOW);
-        digitalWrite(motorA1, HIGH);
-        digitalWrite(motorB2, HIGH);
-        digitalWrite(motorB1, LOW);
-
-        analogWrite(motorAspeed, vSpeed);
-        analogWrite(motorBspeed, vSpeed);
-
-        delay(turn_delay);
+        // turn left
+        analogWrite(MOTOR_1REV, 0);
+        analogWrite(MOTOR_2FWD, 0);
+        analogWrite(MOTOR_2REV, 0);
+        analogWrite(MOTOR_1FWD, TURNING_SPEED);
+        // delay(TURN_DELAY);
     }
 
-    if (right_sensor_state < 500 && left_sensor_state < 500)
+    if (!rightSensorState && leftSensorState)
     {
-        analogWrite(motorAspeed, 0);
-        analogWrite(motorBspeed, 0);
+        // turn right
+        analogWrite(MOTOR_1FWD, 0);
+        analogWrite(MOTOR_2REV, 0);
+        analogWrite(MOTOR_1REV, 0);
+        analogWrite(MOTOR_2FWD, TURNING_SPEED);
+        // delay(TURN_DELAY);
+    }
+
+    if (!rightSensorState && !leftSensorState)
+    {
+        // stop
+        analogWrite(MOTOR_1FWD, 0);
+        analogWrite(MOTOR_1REV, 0);
+        analogWrite(MOTOR_2FWD, 0);
+        analogWrite(MOTOR_2REV, 0);
+        // delay(FWD_DELAY);
     }
 }

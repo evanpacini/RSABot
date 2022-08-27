@@ -1,5 +1,6 @@
 {
     "board": "arduino:avr:megaADK",
-    "port": "COM3",
-    "programmer": "arduino:avrisp"
+    "port": "COM4",
+    "programmer": "arduino:avrisp",
+    "sketch": "line_following.ino"
 }
